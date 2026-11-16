@@ -30,12 +30,40 @@ export default function WrongNotebook() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Görsel boyutu 2MB\'dan küçük olmalıdır.');
-      return;
-    }
+
     const reader = new FileReader();
-    reader.onload = () => setForm(prev => ({ ...prev, image: reader.result as string }));
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          setForm(prev => ({ ...prev, image: compressed }));
+        }
+      };
+      img.src = event.target?.result as string;
+    };
     reader.readAsDataURL(file);
   };
 
@@ -176,7 +204,7 @@ export default function WrongNotebook() {
             <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             {form.image ? (
               <div className="relative inline-block">
-                <img src={form.image} alt="Soru" className="max-h-40 rounded-xl border border-gray-200 dark:border-gray-700" />
+                <img src={form.image} alt="Soru" className="max-h-40 rounded-xl border border-gray-200 dark:border-gray-700 object-contain" />
                 <button type="button" onClick={() => setForm(prev => ({ ...prev, image: '' }))} className="absolute -top-2 -right-2 bg-error-500 text-white rounded-full p-1 shadow-md hover:bg-error-600 transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -188,7 +216,7 @@ export default function WrongNotebook() {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-primary-400 hover:text-primary-500 transition-all w-full justify-center"
               >
                 <Camera className="w-4 h-4" />
-                Fotoğraf Yükle (Base64)
+                Fotoğraf Çek veya Yükle
               </button>
             )}
           </div>

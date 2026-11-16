@@ -79,7 +79,11 @@ export function analyzeExams(
     isWeak: s.net <= weakThreshold,
   }));
 
-  const estimatedScore = Math.round(100 + latest.total * 12.5);
+  // Gerçek ÖSYM TYT Puan Hesaplama Katsayıları (Taban 100, Max 500)
+  const estimatedScore = Math.min(
+    500,
+    Math.round(100 + latest.turkce * 3.3 + latest.matematik * 3.3 + latest.sosyal * 3.4 + latest.fen * 3.4)
+  );
 
   // Progress trend
   let progressTrend: AnalysisResult['progressTrend'] = 'none';
